@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"strings"
+	"unicode/utf8"
 )
 
 const (
@@ -16,6 +17,7 @@ type Content struct {
 	numberLine  int
 	numberWords int
 	numberBytes int
+	numberChars int
 }
 
 func main() {
@@ -28,9 +30,22 @@ func main() {
 		content = parseArgs()
 	}
 
-	if content.numberLine != 0 && content.numberWords != 0 && content.numberBytes != 0 {
-		fmt.Printf(" Кол. слов: %d \n Кол. строк: %d \n Кол.байт: %d \n", content.numberWords, content.numberLine, content.numberBytes)
+	if content.numberChars != 0 {
+		fmt.Printf("Кол. сим: %d \n", content.numberChars)
 	}
+
+	if content.numberWords != 0 {
+		fmt.Printf("Кол. слов: %d \n", content.numberWords)
+	}
+
+	if content.numberLine != 0 {
+		fmt.Printf("Кол. линий: %d \n", content.numberLine)
+	}
+
+	if content.numberBytes != 0 {
+		fmt.Printf("Кол. байтов: %d \n", content.numberBytes)
+	}
+
 }
 
 /*
@@ -69,9 +84,9 @@ func parseArgs() Content {
 	if os.Args[1] == "-h" || os.Args[1] == "--help" {
 		fmt.Println(
 			"-w 	Отобразить колличество слов в объекте \n" +
-				"-l		Вывести колличество строк в объекте\n" +
-				"-m		Показать количество символов в объекте\n" +
-				"-c		Отобразить размер объекта в байтах\n\n" +
+				"-l	Вывести колличество строк в объекте\n" +
+				"-m	Показать количество символов в объекте\n" +
+				"-c	Отобразить размер объекта в байтах\n\n" +
 				"Без параметров: Если аргументов нету то подсчитывается все вышепречисленное из свободного ввод в командную строку." +
 				"Если указан путь к файлу: подсчитывается все вышепречисленное для файла")
 		return Content{}
@@ -84,18 +99,16 @@ func parseArgs() Content {
 	for _, arg := range os.Args[1:] {
 
 		if arg == "-l" {
-			lineNumber := CalculateLineOfFile(file)
-			content.numberLine = lineNumber
+			content.numberLine = CalculateLineOfFile(file)
 			break
 		} else if arg == "-w" {
-			numberWords := CalculateWordsOfFile(file)
-			content.numberWords = numberWords
+			content.numberWords = CalculateWordsOfFile(file)
 			break
 		} else if arg == "-m" {
-
+			content.numberChars = CalculateCountCharecters(file)
+			break
 		} else if arg == "-c" {
-			bytesNumber := CalculateFileOfBytes(file)
-			content.numberBytes += bytesNumber
+			content.numberBytes = CalculateFileOfBytes(file)
 			break
 		} else {
 			content = AnalyzingAllFile(file)
@@ -181,4 +194,18 @@ func CalculateLineOfFile(file *os.File) int {
 	}
 
 	return lineNumber
+}
+
+/*
+Подсчёт символов из файла
+*/
+func CalculateCountCharecters(file *os.File) int {
+	data, err := os.ReadFile(file.Name())
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	text := string(data)
+	return utf8.RuneCountInString(text)
 }
